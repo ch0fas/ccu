@@ -3,8 +3,10 @@ package main
 import (
 	// "fmt"
 
-	"github.com/rivo/tview"
 	"ccu_chofas/pages"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 func main(){
@@ -15,20 +17,37 @@ func main(){
 
 	grid := tview.NewGrid().
 		SetRows(0,0,0,0,0).
-		SetColumns(0,0,0).SetBorders(true)
+		SetColumns(-2,-9,-1).SetBorders(true)
 	
 	// Buttons to access the different parts of the TUI
 	creds_button := tview.NewButton("Credits").SetSelectedFunc(func() {
 		external_pages.SwitchToPage("credits")
 	})
+	weekday_button := tview.NewButton("Weekday Finder").SetSelectedFunc(func() {
+		external_pages.SwitchToPage("weekday_finder")
+	})
 
-	grid.AddItem(main_title_view, 1, 1, 1, 3, 0, 0, false)
-	grid.AddItem(creds_button, 5,1, 1, 1, 0, 0, true)
+	grid.AddItem(main_title_view, 0, 0, 1, 3, 0, 0, false)
+	grid.AddItem(creds_button, 4,0, 1, 1, 0, 0, false)
+	grid.AddItem(weekday_button, 1, 0, 1, 1, 0, 0, true)
 
 	// Creating the external pages that can be accessed with the GUI
 	external_pages.AddPage("main_page", grid, true, true)
 	external_pages.AddPage("credits", pages.Credits_Form(app, external_pages), true, false)
-	//external_pages.AddPage("weekday_finder", pages.Weekday_Finder(app, external_pages), true, false)
+	external_pages.AddPage("weekday_finder", pages.Weekday_Finder(app, external_pages), true, false)
+
+	// Movement options in the grid
+	clickable_elements := []tview.Primitive{weekday_button, creds_button}
+	clickables_index := 0
+
+	grid.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			clickables_index = (clickables_index + 1) % len(clickable_elements)
+			app.SetFocus(clickable_elements[clickables_index])
+			return nil
+		}
+		return event
+	})
 
 	
 	if err := app.SetRoot(external_pages, true).Run(); err != nil{
